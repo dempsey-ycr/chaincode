@@ -51,13 +51,16 @@ func (p *AppManagement) Invoke(stub shim.ChaincodeStubInterface) peer.Response {
 
 func (p *AppManagement) exec(stub shim.ChaincodeStubInterface, function string, args []string) peer.Response {
 	f, ok := p.mapfunctions[function]
-	if ok {
-		fmt.Println("Invoke Success: functiong name ", function)
-		// logging.Debugf("Invoke Success: functiong name [%s]", function)
-		return f(stub, args) // 具体执peer chaincode invoke -o orderer.example.com:7050 --tls true --cafile /opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/ordererOrganizations/example.com/orderers/orderer.example.com/msp/tlscacerts/tlsca.example.com-cert.pem -C mychannel -n byfn --peerAddresses peer0.org2.example.com:7051 --tlsRootCertFiles /opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/org2.example.com/peers/peer0.org2.example.com/tls/ca.crt -c '{"Args":["testWrite","key","120"]}'
+	if !ok {
+		p.initFunctions()
+		f, ok = p.mapfunctions[function]
+		if !ok {
+			fmt.Println("======Received unknown function:", function)
+			return resp.ErrorNormal("Received unknown function invocation function: " + function)
+		}
 	}
-	fmt.Println("======Received unknown function:", function)
-	return resp.ErrorNormal("Received unknown function invocation function: " + function)
+	logging.Debugf("Invoke Success: functiong name [%s]", function)
+	return f(stub, args)
 }
 
 /************************************************分界线********************************************************/
