@@ -3,6 +3,7 @@ package main
 import (
 	"chaincode/app/verse/controllers/basic"
 	"chaincode/app/verse/controllers/test"
+	"chaincode/app/verse/utils/filter"
 	"chaincode/app/verse/utils/logging"
 	"errors"
 	"fmt"
@@ -22,13 +23,6 @@ type ChaincodeManagement interface {
 	TraceHistory(shim.ChaincodeStubInterface, []string) peer.Response
 	ReadList(shim.ChaincodeStubInterface, []string) peer.Response
 }
-
-// App Generic methods for some classes
-type App struct {
-	ChaincodeManagement
-}
-
-// type peerFunc func(shim.ChaincodeStubInterface, []string) peer.Response
 
 //----------------------------------------------------分割线----------------------------------------------------------//
 
@@ -54,15 +48,17 @@ func (p *AppManagement) Init(stub shim.ChaincodeStubInterface) peer.Response {
 // Invoke ...
 func (p *AppManagement) Invoke(stub shim.ChaincodeStubInterface) peer.Response {
 	// 通常一次invoke请求至少应该有三个参数，args[0]: ObjType;  args[1]: Key;  args[2]: Value
-	fmt.Println("-------*******************-------")
-
 	function, args := stub.GetFunctionAndParameters()
 	if peerResponse, err := p.dispensableExec(stub, function, args); err == nil {
 		return peerResponse
 	}
+	if m := filter.CheckParamsLength(args, 2); m != "" {
+		return shim.Error(m)
+	}
 
-	fmt.Println("function:", function)
-	fmt.Println("args:", args[0], args[1])
+	logging.Debug("---debug function:", function)
+	logging.Debug("---debug value:", args[1])
+	logging.Debug("---debug objType:", args[0])
 
 	objType, err := strconv.Atoi(args[0])
 	if err != nil {
@@ -70,35 +66,25 @@ func (p *AppManagement) Invoke(stub shim.ChaincodeStubInterface) peer.Response {
 		return shim.Error(err.Error())
 	}
 
-	fmt.Println("-------obj type-------", objType)
-
-	var app App
+	var app ChaincodeManagement
 	switch pbasic.BasicObjectType(objType) {
 	case pbasic.BasicObjectType_OBJTYPE_NATURALPERSON:
-		app = App{
-			&basic.NaturalPerson{},
-		}
+		app = &basic.NaturalPerson{}
 	case pbasic.BasicObjectType_OBJTYPE_LEGALPERSON:
-		app = App{
-			&basic.LegalPerson{},
-		}
+		app = &basic.LegalPerson{}
 	case pbasic.BasicObjectType_OBJTYPE_HOUSEPROPERTY:
-		app = App{
-			&basic.HouseProperty{},
-		}
+		app = &basic.HouseProperty{}
 	case pbasic.BasicObjectType_OBJTYPE_PROJECT_ATO:
-		app = App{
-			&basic.ProjectATO{},
-		}
+		app = &basic.ProjectATO{}
 	default:
 		logging.Error("The object type is not defined, objType:%d", objType)
 		return shim.Error("The object type is not defined")
 	}
 
-	return p.exec(stub, &app, function, args[1:])
+	return p.exec(stub, app, function, args[1:])
 }
 
-func (p *AppManagement) exec(stub shim.ChaincodeStubInterface, app *App, function string, args []string) peer.Response {
+func (p *AppManagement) exec(stub shim.ChaincodeStubInterface, app ChaincodeManagement, function string, args []string) peer.Response {
 	switch function {
 	case "Insert":
 		fmt.Println("start run 'insert' function...")
