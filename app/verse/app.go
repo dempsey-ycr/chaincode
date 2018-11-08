@@ -56,9 +56,9 @@ func (p *AppManagement) Invoke(stub shim.ChaincodeStubInterface) peer.Response {
 		return shim.Error(m)
 	}
 
-	logging.Debug("---debug function:", function)
-	logging.Debug("---debug value:", args[1])
-	logging.Debug("---debug objType:", args[0])
+	logging.Info("---debug function:", function)
+	logging.Info("---debug value:", args[1])
+	logging.Info("---debug objType:", args[0])
 
 	objType, err := strconv.Atoi(args[0])
 	if err != nil {

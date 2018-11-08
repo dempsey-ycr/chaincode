@@ -77,6 +77,6 @@ func Criticalf(format string, args ...interface{}) {
 func init() {
 	if log == nil {
 		log = shim.NewLogger("verse")
-		log.SetLevel(shim.LogInfo)
+		log.SetLevel(shim.LogDebug)
 	}
 }
