@@ -6,6 +6,7 @@ package basic
 import (
 	"chaincode/app/verse/models/db"
 	"chaincode/app/verse/utils/filter"
+	"chaincode/app/verse/utils/logging"
 	"encoding/json"
 	pbasic "protobuf/projects/go/protocol/basic"
 
@@ -19,27 +20,40 @@ type NaturalPerson struct {
 
 // Insert ...
 func (p *NaturalPerson) Insert(stub shim.ChaincodeStubInterface, args []string) peer.Response {
-	err := filter.CheckParamsNull(args...)
-	if err != nil {
-		return shim.Error(err.Error())
+	var err error
+	var m string
+	if m = filter.CheckParamsLength(args, 1); m != "" {
+		return shim.Error(m)
 	}
-	if e := filter.CheckParamsLength(args, 1); err != nil {
-		return e.(peer.Response)
-	}
+
 	var metadata pbasic.NaturalPerson
 	if err = json.Unmarshal([]byte(args[0]), &metadata); err != nil {
+		logging.Error("chaincode unmarshal metadata error: ", err.Error())
 		return shim.Error(err.Error())
 	}
 
-	if err = db.CreateKeyWithNamespace(stub, metadata.Type, metadata.Id, metadata.Owner); err != nil {
-		return shim.Error(err.Error())
+	cond := pbasic.RequestByCond{
+		Owner: metadata.Owner,
+		Type:  metadata.Type,
+		Id:    metadata.Id,
 	}
 
-	docKey := pbasic.BasicObjectType_name[metadata.Type] + "_" + metadata.Id
+	if m = filter.CheckRequired(&cond); m != "" {
+		return shim.Error(m)
+	}
+
+	docKey := db.CreateDockey(&cond)
+	logging.Info("The metadata stores docKey: %s", docKey)
+
 	if data, _ := db.GetState(stub, docKey); len(data) != 0 {
 		return shim.Error("Insert Error: The docKey already exists: " + docKey)
 	}
 	if err = db.PutInterface(stub, docKey, &metadata); err != nil {
+		return shim.Error(err.Error())
+	}
+
+	// 利用meta里的元素组合key作为index
+	if err = db.CreateKeyWithNamespace(stub, metadata.Type, metadata.Id, metadata.Owner); err != nil {
 		return shim.Error(err.Error())
 	}
 	return shim.Success(nil)
@@ -47,24 +61,29 @@ func (p *NaturalPerson) Insert(stub shim.ChaincodeStubInterface, args []string) 
 
 // Delete ...
 func (p *NaturalPerson) Delete(stub shim.ChaincodeStubInterface, args []string) peer.Response {
-	if err := filter.CheckParamsLength(args, 1); err != nil {
-		return err.(peer.Response)
+	var err error
+	var m string
+	if m = filter.CheckParamsLength(args, 1); m != "" {
+		return shim.Error(m)
 	}
 
-	err := filter.CheckParamsNull(args...)
-	if err != nil {
-		return shim.Error(err.Error())
-	}
-	var req pbasic.RequestByTypeID
-	if err = json.Unmarshal([]byte(args[0]), &req); err != nil {
+	var cond pbasic.RequestByCond
+	if err = json.Unmarshal([]byte(args[0]), &cond); err != nil {
+		logging.Error("chaincode unmarshal cond error: ", err.Error())
 		return shim.Error(err.Error())
 	}
 
-	docKey := pbasic.BasicObjectType_name[req.Otype] + "_" + req.Id
+	if m = filter.CheckRequired(&cond); m != "" {
+		return shim.Error(m)
+	}
+
+	docKey := db.CreateDockey(&cond)
+	logging.Info("The metadata stores docKey: %s", docKey)
+
 	if err = db.DeleteState(stub, docKey); err != nil {
 		return shim.Error(err.Error())
 	}
-	if err = db.DeleteKeyWithNamespace(stub, req.Otype, req.Id, req.Owner); err != nil {
+	if err = db.DeleteKeyWithNamespace(stub, cond.Type, cond.Id, cond.Owner); err != nil {
 		return shim.Error(err.Error())
 	}
 	return shim.Success(nil)
@@ -72,19 +91,31 @@ func (p *NaturalPerson) Delete(stub shim.ChaincodeStubInterface, args []string) 
 
 // Change ...
 func (p *NaturalPerson) Change(stub shim.ChaincodeStubInterface, args []string) peer.Response {
-	err := filter.CheckParamsNull(args...)
-	if err != nil {
-		return shim.Error(err.Error())
+	var err error
+	var m string
+	if m = filter.CheckParamsLength(args, 1); m != "" {
+		return shim.Error(m)
 	}
-	if e := filter.CheckParamsLength(args, 1); err != nil {
-		return e.(peer.Response)
-	}
+
 	var metadata pbasic.NaturalPerson
 	if err = json.Unmarshal([]byte(args[0]), &metadata); err != nil {
+		logging.Error("chaincode unmarshal metadata error: ", err.Error())
 		return shim.Error(err.Error())
 	}
 
-	docKey := pbasic.BasicObjectType_name[metadata.Type] + "_" + metadata.Id
+	cond := pbasic.RequestByCond{
+		Owner: metadata.Owner,
+		Type:  metadata.Type,
+		Id:    metadata.Id,
+	}
+
+	if m = filter.CheckRequired(&cond); m != "" {
+		return shim.Error(m)
+	}
+
+	docKey := db.CreateDockey(&cond)
+	logging.Info("The metadata stores docKey: %s", docKey)
+
 	if data, _ := db.GetState(stub, docKey); len(data) == 0 {
 		return shim.Error("Change Error: The docKey is not exists: " + docKey)
 	}
@@ -96,22 +127,28 @@ func (p *NaturalPerson) Change(stub shim.ChaincodeStubInterface, args []string) 
 
 // ReadDesc [Read single by id]
 func (p *NaturalPerson) ReadDesc(stub shim.ChaincodeStubInterface, args []string) peer.Response {
-	if err := filter.CheckParamsLength(args, 1); err != nil {
-		return err.(peer.Response)
+	var err error
+	var m string
+	if m = filter.CheckParamsLength(args, 1); m != "" {
+		return shim.Error(m)
 	}
 
-	err := filter.CheckParamsNull(args...)
-	if err != nil {
-		return shim.Error(err.Error())
-	}
-	var req pbasic.RequestByTypeID
-	if err = json.Unmarshal([]byte(args[0]), &req); err != nil {
+	var cond pbasic.RequestByCond
+	if err = json.Unmarshal([]byte(args[0]), &cond); err != nil {
+		logging.Error("chaincode unmarshal cond error: ", err.Error())
 		return shim.Error(err.Error())
 	}
 
-	docKey := pbasic.BasicObjectType_name[req.Otype] + "_" + req.Id
+	if m = filter.CheckRequired(&cond); m != "" {
+		return shim.Error(m)
+	}
+
+	docKey := db.CreateDockey(&cond)
+	logging.Info("The metadata stores docKey: %s", docKey)
+
 	data, err := db.GetState(stub, docKey)
 	if err != nil {
+		logging.Error("ReadDesc error: %s", err.Error())
 		return shim.Error(err.Error())
 	}
 	if len(data) == 0 {
@@ -122,17 +159,28 @@ func (p *NaturalPerson) ReadDesc(stub shim.ChaincodeStubInterface, args []string
 
 // TraceHistory ...
 func (p *NaturalPerson) TraceHistory(stub shim.ChaincodeStubInterface, args []string) peer.Response {
-	if err := filter.CheckParamsLength(args, 1); err != nil {
-		return err.(peer.Response)
+	var err error
+	var m string
+	if m = filter.CheckParamsLength(args, 1); m != "" {
+		return shim.Error(m)
 	}
 
-	var req pbasic.RequestByTypeID
-	if err := json.Unmarshal([]byte(args[0]), &req); err != nil {
+	var cond pbasic.RequestByCond
+	if err = json.Unmarshal([]byte(args[0]), &cond); err != nil {
+		logging.Error("chaincode unmarshal cond error: ", err.Error())
 		return shim.Error(err.Error())
 	}
-	docKey := pbasic.BasicObjectType_name[req.Otype] + "_" + req.Id
+
+	if m = filter.CheckRequired(&cond); m != "" {
+		return shim.Error(m)
+	}
+
+	docKey := db.CreateDockey(&cond)
+	logging.Info("The metadata stores docKey: %s", docKey)
+
 	data, err := db.GetHistoryForDocWithNamespace(stub, docKey)
 	if err != nil {
+		logging.Error("TraceHistory error: %s", err.Error())
 		shim.Error(err.Error())
 	}
 	return shim.Success(data)

@@ -15,16 +15,6 @@ import (
 	"github.com/hyperledger/fabric/protos/peer"
 )
 
-// ChaincodeManagement the assets manage interface
-type ChaincodeManagement interface {
-	Insert(shim.ChaincodeStubInterface, []string) peer.Response
-	Delete(shim.ChaincodeStubInterface, []string) peer.Response
-	Change(shim.ChaincodeStubInterface, []string) peer.Response
-	ReadDesc(shim.ChaincodeStubInterface, []string) peer.Response
-	TraceHistory(shim.ChaincodeStubInterface, []string) peer.Response
-	ReadList(shim.ChaincodeStubInterface, []string) peer.Response
-}
-
 // AssetManage asset new struct
 type AssetManage struct{}
 

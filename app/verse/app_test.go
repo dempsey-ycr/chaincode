@@ -1,7 +1,6 @@
 package main
 
 import (
-	. "chaincode/app/verse/controllers/assetManage"
 	"encoding/json"
 	"fmt"
 	"testing"

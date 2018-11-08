@@ -1,37 +1,37 @@
 package filter
 
 import (
-	resp "chaincode/app/verse/utils/response"
 	"fmt"
+	pbasic "protobuf/projects/go/protocol/basic"
 
 	"errors"
 )
 
-// 判断必填参数是否为空
+// CheckParamsNull 判断必填参数是否为空
 func CheckParamsNull(args ...string) error {
 	for _, v := range args {
 		if v == "" || v == " " {
-			return errors.New("param error null...")
+			return errors.New("param error null")
 		}
 	}
 	return nil
 }
 
-func CheckParamsLength(args []string, lens int) interface{} {
+// CheckParamsLength 判断参数长度
+func CheckParamsLength(args []string, lens int) string {
 	if len(args) != lens {
-		for i := 0; i < len(args); i++ {
-			fmt.Print(args[i], "---")
-		}
-		return resp.ErrorArguments(fmt.Sprintf("Incorrect number of arguments. Expecting %d != %d", len(args), lens))
+		return "The number of parameters does not match"
 	}
-	return nil
+	return ""
 }
 
-func CheckRequired(argsArray []string, indexArray []int) interface{} {
-	for _, index := range indexArray {
-		if len(argsArray[index]) <= 0 {
-			return resp.ErrorArguments(fmt.Sprintf("%vst argument must be a non-empty string ]", index))
-		}
+// CheckRequired 核实必须的参数
+func CheckRequired(cond *pbasic.RequestByCond) string {
+	if cond.Id == "" {
+		return "The object id cannot be empty"
 	}
-	return nil
+	if cond.Type <= int32(pbasic.BasicObjectType_OBJTYPE_NULL) || int32(pbasic.BasicObjectType_OBJTYPE_MAX) <= cond.Type {
+		return fmt.Sprintf("Invalid object type[%d]", cond.Type)
+	}
+	return ""
 }

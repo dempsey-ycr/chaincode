@@ -12,22 +12,23 @@ import (
 type TestNetwork struct {
 }
 
-// args: args[0]- function name; args[1]- key; args[2]- value
+// TestWrite args: args[0]- function name; args[1]- key; args[2]- value
 func (p *TestNetwork) TestWrite(stub shim.ChaincodeStubInterface, args []string) peer.Response {
-	if err := filter.CheckParamsLength(args, 2); err != nil {
-		return err.(peer.Response)
+	if m := filter.CheckParamsLength(args, 2); m != "" {
+		return shim.Error(m)
 	}
 
 	if err := stub.PutState(args[0], []byte(args[1])); err != nil {
 		return resp.ErrorNormal("insertTest PutState err: " + err.Error())
 	}
+	stub.SetEvent("test", []byte("test([a-zA-Z]+)"))
 	return shim.Success(nil)
 }
 
-// args: args[0]- function name; args[1]- key
+// TestRead args: args[0]- function name; args[1]- key
 func (p *TestNetwork) TestRead(stub shim.ChaincodeStubInterface, args []string) peer.Response {
-	if err := filter.CheckParamsLength(args, 1); err != nil {
-		return err.(peer.Response)
+	if m := filter.CheckParamsLength(args, 1); m != "" {
+		return shim.Error(m)
 	}
 
 	res, err := stub.GetState(args[0])

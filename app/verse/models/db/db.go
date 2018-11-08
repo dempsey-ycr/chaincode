@@ -6,8 +6,10 @@ import (
 	"strconv"
 	"strings"
 
+	. "chaincode/app/verse/models/constant"
 	"chaincode/app/verse/utils/filter"
 	"chaincode/app/verse/utils/logging"
+	pbasic "protobuf/projects/go/protocol/basic"
 
 	"time"
 
@@ -146,6 +148,14 @@ func DeleteState(stub shim.ChaincodeStubInterface, docKey string) error {
 	return stub.DelState(docKey)
 }
 
+// CreateDockey ...
+func CreateDockey(cond *pbasic.RequestByCond) string {
+	if cond.Owner == "" {
+		return OBJECT_DOCKEY_TAG + "[" + pbasic.BasicObjectType_name[cond.Type] + "_" + cond.Id + "]"
+	}
+	return OBJECT_DOCKEY_TAG + "[" + pbasic.BasicObjectType_name[cond.Type] + "_" + cond.Owner + "_" + cond.Id + "]"
+}
+
 // CreateKeyWithNamespace ...
 // example: if params is p.color、p.name、p.age
 // the 'CreateCompositeKey' objectType: "$p.color~$p.name~$p.age", attributes: []string{$p.color, $p.name, $p.age}
@@ -160,8 +170,10 @@ func CreateKeyWithNamespace(stub shim.ChaincodeStubInterface, nspace ...interfac
 			result += sep
 		}
 		switch space.(type) {
-		case int, int32:
+		case int:
 			result += strconv.Itoa(space.(int))
+		case int32:
+			result += strconv.Itoa(int(space.(int32)))
 		case int64:
 			result += strconv.FormatInt(space.(int64), 10)
 		case string:
@@ -201,8 +213,10 @@ func DeleteKeyWithNamespace(stub shim.ChaincodeStubInterface, nspace ...interfac
 			result += sep
 		}
 		switch space.(type) {
-		case int, int32:
+		case int:
 			result += strconv.Itoa(space.(int))
+		case int32:
+			result += strconv.Itoa(int(space.(int32)))
 		case int64:
 			result += strconv.FormatInt(space.(int64), 10)
 		case string:
