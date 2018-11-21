@@ -1,30 +1,19 @@
 package main
 
 import (
+	"chaincode/app/verse/controllers/actions"
 	"chaincode/app/verse/controllers/basic"
 	"chaincode/app/verse/controllers/test"
 	"chaincode/app/verse/utils/filter"
 	"chaincode/app/verse/utils/logging"
 	"errors"
 	"fmt"
-	pbasic "protobuf/projects/go/protocol/basic"
+	"protobuf/projects/go/protocol/common"
 	"strconv"
 
 	"github.com/hyperledger/fabric/core/chaincode/shim"
 	"github.com/hyperledger/fabric/protos/peer"
 )
-
-// ChaincodeManagement the assets manage interface
-type ChaincodeManagement interface {
-	Insert(shim.ChaincodeStubInterface, []string) peer.Response
-	Delete(shim.ChaincodeStubInterface, []string) peer.Response
-	Change(shim.ChaincodeStubInterface, []string) peer.Response
-	ReadDesc(shim.ChaincodeStubInterface, []string) peer.Response
-	TraceHistory(shim.ChaincodeStubInterface, []string) peer.Response
-	ReadList(shim.ChaincodeStubInterface, []string) peer.Response
-}
-
-//----------------------------------------------------分割线----------------------------------------------------------//
 
 // AppManagement manage all app
 type AppManagement struct {
@@ -66,25 +55,34 @@ func (p *AppManagement) Invoke(stub shim.ChaincodeStubInterface) peer.Response {
 		return shim.Error(err.Error())
 	}
 
-	var app ChaincodeManagement
-	switch pbasic.BasicObjectType(objType) {
-	case pbasic.BasicObjectType_OBJTYPE_NATURALPERSON:
+	var app basic.BaseDescription
+	switch common.ObjectType(objType) {
+
+	// 基本对象
+	case common.ObjectType_OBJTYPE_NATURALPERSON:
 		app = &basic.NaturalPerson{}
-	case pbasic.BasicObjectType_OBJTYPE_LEGALPERSON:
+	case common.ObjectType_OBJTYPE_LEGALPERSON:
 		app = &basic.LegalPerson{}
-	case pbasic.BasicObjectType_OBJTYPE_HOUSEPROPERTY:
+	case common.ObjectType_OBJTYPE_HOUSEPROPERTY:
 		app = &basic.HouseProperty{}
-	case pbasic.BasicObjectType_OBJTYPE_PROJECT_ATO:
+	case common.ObjectType_OBJTYPE_PROJECT_ATO:
 		app = &basic.ProjectATO{}
+
+	// 行为对象
+	case common.ObjectType_OBJTYPE_ACTION_ATOTRANS:
+		return p.execActions(stub, &actions.AtoTransaction{}, function, args[1:])
+	case common.ObjectType_OBJTYPE_ACTION_BITSDAQ:
+		return p.execActions(stub, &actions.Bitsdaq{}, function, args[1:])
+
 	default:
 		logging.Error("The object type is not defined, objType:%d", objType)
 		return shim.Error("The object type is not defined")
 	}
 
-	return p.exec(stub, app, function, args[1:])
+	return p.execBase(stub, app, function, args[1:])
 }
 
-func (p *AppManagement) exec(stub shim.ChaincodeStubInterface, app ChaincodeManagement, function string, args []string) peer.Response {
+func (p *AppManagement) execBase(stub shim.ChaincodeStubInterface, app basic.BaseDescription, function string, args []string) peer.Response {
 	switch function {
 	case "Insert":
 		fmt.Println("start run 'insert' function...")
@@ -102,6 +100,17 @@ func (p *AppManagement) exec(stub shim.ChaincodeStubInterface, app ChaincodeMana
 	default:
 		logging.Error("The method is not yet defined, name:%s", function)
 		return shim.Error("The method is not yet defined")
+	}
+}
+
+func (p *AppManagement) execActions(stub shim.ChaincodeStubInterface, app actions.BehaviorDescription, function string, args []string) peer.Response {
+	switch function {
+	case "Transfer":
+		return app.Transfer(stub, args)
+	case "Balance":
+		return app.Balance(stub, args)
+	default:
+		return p.execBase(stub, app, function, args)
 	}
 }
 

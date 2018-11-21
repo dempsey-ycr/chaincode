@@ -9,6 +9,7 @@ import (
 	"chaincode/app/verse/utils/logging"
 	"encoding/json"
 	pbasic "protobuf/projects/go/protocol/basic"
+	"protobuf/projects/go/protocol/common"
 
 	"github.com/hyperledger/fabric/core/chaincode/shim"
 	"github.com/hyperledger/fabric/protos/peer"
@@ -31,7 +32,7 @@ func (p *HouseProperty) Insert(stub shim.ChaincodeStubInterface, args []string) 
 		return shim.Error(err.Error())
 	}
 
-	cond := pbasic.RequestByCond{
+	cond := common.RequestByCond{
 		Owner: metadata.Owner,
 		Type:  metadata.Type,
 		Id:    metadata.Id,
@@ -65,7 +66,7 @@ func (p *HouseProperty) Delete(stub shim.ChaincodeStubInterface, args []string) 
 		return shim.Error(m)
 	}
 
-	var cond pbasic.RequestByCond
+	var cond common.RequestByCond
 	if err = json.Unmarshal([]byte(args[0]), &cond); err != nil {
 		logging.Error("chaincode unmarshal cond error: ", err.Error())
 		return shim.Error(err.Error())
@@ -100,7 +101,7 @@ func (p *HouseProperty) Change(stub shim.ChaincodeStubInterface, args []string) 
 		return shim.Error(err.Error())
 	}
 
-	cond := pbasic.RequestByCond{
+	cond := common.RequestByCond{
 		Owner: metadata.Owner,
 		Type:  metadata.Type,
 		Id:    metadata.Id,
@@ -129,7 +130,7 @@ func (p *HouseProperty) ReadDesc(stub shim.ChaincodeStubInterface, args []string
 		return shim.Error(m)
 	}
 
-	var cond pbasic.RequestByCond
+	var cond common.RequestByCond
 	if err = json.Unmarshal([]byte(args[0]), &cond); err != nil {
 		logging.Error("chaincode unmarshal cond error: ", err.Error())
 		return shim.Error(err.Error())
@@ -160,7 +161,7 @@ func (p *HouseProperty) TraceHistory(stub shim.ChaincodeStubInterface, args []st
 		return shim.Error(m)
 	}
 
-	var cond pbasic.RequestByCond
+	var cond common.RequestByCond
 	if err = json.Unmarshal([]byte(args[0]), &cond); err != nil {
 		logging.Error("chaincode unmarshal cond error: ", err.Error())
 		return shim.Error(err.Error())

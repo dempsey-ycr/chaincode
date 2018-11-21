@@ -2,7 +2,7 @@ package filter
 
 import (
 	"fmt"
-	pbasic "protobuf/projects/go/protocol/basic"
+	"protobuf/projects/go/protocol/common"
 
 	"errors"
 )
@@ -26,11 +26,11 @@ func CheckParamsLength(args []string, lens int) string {
 }
 
 // CheckRequired 核实必须的参数
-func CheckRequired(cond *pbasic.RequestByCond) string {
+func CheckRequired(cond *common.RequestByCond) string {
 	if cond.Id == "" {
 		return "The object id cannot be empty"
 	}
-	if cond.Type <= int32(pbasic.BasicObjectType_OBJTYPE_NULL) || int32(pbasic.BasicObjectType_OBJTYPE_MAX) <= cond.Type {
+	if cond.Type <= int32(common.ObjectType_OBJTYPE_NULL) || int32(common.ObjectType_OBJTYPE_MAX) <= cond.Type {
 		return fmt.Sprintf("Invalid object type[%d]", cond.Type)
 	}
 	return ""

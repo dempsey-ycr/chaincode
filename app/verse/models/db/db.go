@@ -9,7 +9,7 @@ import (
 	. "chaincode/app/verse/models/constant"
 	"chaincode/app/verse/utils/filter"
 	"chaincode/app/verse/utils/logging"
-	pbasic "protobuf/projects/go/protocol/basic"
+	"protobuf/projects/go/protocol/common"
 
 	"time"
 
@@ -149,11 +149,11 @@ func DeleteState(stub shim.ChaincodeStubInterface, docKey string) error {
 }
 
 // CreateDockey ...
-func CreateDockey(cond *pbasic.RequestByCond) string {
+func CreateDockey(cond *common.RequestByCond) string {
 	if cond.Owner == "" {
-		return OBJECT_DOCKEY_TAG + "[" + pbasic.BasicObjectType_name[cond.Type] + "_" + cond.Id + "]"
+		return OBJECT_DOCKEY_TAG + "[" + common.ObjectType_name[cond.Type] + "_" + cond.Id + "]"
 	}
-	return OBJECT_DOCKEY_TAG + "[" + pbasic.BasicObjectType_name[cond.Type] + "_" + cond.Owner + "_" + cond.Id + "]"
+	return OBJECT_DOCKEY_TAG + "[" + common.ObjectType_name[cond.Type] + "_" + cond.Owner + "_" + cond.Id + "]"
 }
 
 // CreateKeyWithNamespace ...
