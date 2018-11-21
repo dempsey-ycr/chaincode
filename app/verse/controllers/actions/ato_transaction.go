@@ -11,9 +11,10 @@ import (
 	"protobuf/projects/go/protocol/action"
 	"protobuf/projects/go/protocol/common"
 
+	"chaincode/app/verse/utils/logging"
+
 	"github.com/hyperledger/fabric/core/chaincode/shim"
 	"github.com/hyperledger/fabric/protos/peer"
-	"haina.com/share/logging"
 )
 
 // AtoTransaction ...
